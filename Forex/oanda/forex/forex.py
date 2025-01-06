@@ -33,6 +33,10 @@ Attempt at making a class
 Rules
 
     - snake_case for functions 
+    - camelCase for variables
+    - SNAKE_CASE for hyperparameters
+    - PascalCase for classes
+
     
 
 
@@ -52,3 +56,12 @@ AllCurrenyPairs = [
     "GBP/TRY", "GBP/MXN", "GBP/HKD"
 ]
 
+class Forex:
+    def __init__(self):
+        print("Working")
+    pass
+
+
+class ForexApi:
+
+    pass

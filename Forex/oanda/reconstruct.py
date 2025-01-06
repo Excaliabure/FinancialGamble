@@ -1,10 +1,11 @@
 import forex
+import numpy as np
 import os
 os.system('cls')
 
-forex.test(10)
+g = forex.min()
+print(g)
 
-forex.val
 
 
 

@@ -45,7 +45,7 @@ SETTINGS = {
         "Account ID": ai,
         "Practice Account": True,
         "Trade Duration": 28800,
-        "Trade Interval": 120,
+        "Trade Interval": 15,
         "Iterations" : 2000,
         "coef" : 0.5,
         "General Settings" : "true",
@@ -404,14 +404,16 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
                 return y,dy,ddy
 
             action = False
-            if cpos != pos:
+            
+            cpl = float(env.view(_pair = pair)['unrealizedPL'])
+
+            if cpos != pos and (cpl >= 0.2 or cpl <= -0.2) :
                 
                 q = env.close(pair)
                 
                 print(f"{pair} closed {q}")
                 
                 pos = cpos
-                # idk why but i have to invert it 
                 if cpos < 0:
                     env.buy_sell(pair, 1000, sltp, terminal_print=False)
                 else:
@@ -451,7 +453,7 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
             data_arr_collection('data.json', 'y', y[-1])
             data_arr_collection('data.json', 'dy', dy[-1])
             data_arr_collection('data.json', 'ddy', ddy[-1])
-            data_arr_collection('data.json', 'bal', env.view(gen_info=True)['account']['balance'])
+            data_arr_collection('data.json', 'bal', float(env.view(gen_info=True)['account']['balance']))
 
             
             if action == True:
@@ -470,7 +472,8 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
                 pass
 
         ########################################################
-        ## Adds more accuracy to the function
+        # Adds more accuracy to the function, basically gets the 
+        # live value of the current pair every 5 senods
         for smolstuff in range(0, int(settings["Trade Interval"]), 5):
             val = float(env.get_pair(pair)['prices'][0]['bids'][0]['price'])
                 
