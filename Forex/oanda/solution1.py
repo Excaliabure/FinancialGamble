@@ -357,9 +357,7 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
     
         time.sleep(0.5)
 
-
-    history_arr_dict[pair]["ddy_sign"] = 1
-    history_arr_dict[pair]["dy_sign"] = -1
+    action = False
     while c < iters:
 
         for pair in settings['Pair Settings'].keys():
@@ -390,63 +388,53 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
 
 
 
-            # if abs(ddy[-1]aX) < 1e-5 and abs(dy[-1]) < 1e-5:
-            if ddy[-1] !=  history_arr_dict[pair]["ddy_sign"]:
-                if (dy[-1] < 0):
-                    # if previous deriv is neg, gonan go down
-                    cpos = 1
-                else:
-                    cpos = -1
-                history_arr_dict[pair]["ddy_sign"] *= -1
-
-
-            if ret_derivs:
-                return y,dy,ddy
-
-            action = False
-            
-            cpl = float(env.view(_pair = pair)['unrealizedPL'])
-
-            if cpos != pos and (cpl >= 0.2 or cpl <= -0.2) :
+            if ddy[-1] == dy[-1]:
                 
                 q = env.close(pair)
+                if (dy[-1] < 0):
+                    # deriv is negative, so set sell pos
+                    cpos = -1
+                    env.buy_sell(pair, -1000, sltp, terminal_print=False)
+                else:
+                    cpos = 1
+                    env.buy_sell(pair, 1000, sltp, terminal_print=False)
+
                 
                 print(f"{pair} closed {q}")
                 
-                pos = cpos
-                if cpos < 0:
-                    env.buy_sell(pair, 1000, sltp, terminal_print=False)
-                else:
-                    env.buy_sell(pair, -1000, sltp, terminal_print=False)
-                    
                 
                 time.sleep(0.5)
                 
                 print()
                 print(f"{'[SELL]' if cpos == -1 else '[BUY]'} position on {pair} with deriv = {ddy[-1]}")
-
-                # read_write_save_json(file,info,name)
-
                 print()
                 time.sleep(0.5)
+                
                 action = True
+
+
+            if ret_derivs:
+                return y,dy,ddy
+
+            
+            cpl = float(env.view(_pair = pair)['unrealizedPL'])
 
             
 
 
             history_arr_dict[pair]["current_position"] = cpos
             history_arr_dict[pair]["hold_position"] = cpos
-            if (env.view(pair) == None):
+            while (env.view(pair) == None):
                 print()
                 print(f"No sell/buy position for {pair}. Attempting...")
                 tempcurr = history_arr_dict[pair]["current_position"]
                 env.buy_sell(pair, 1000 * tempcurr, sltp, terminal_print=False)
                 print(f"{'[SELL]' if cpos == -1 else '[BUY]'} position on {pair} with deriv = {ddy[-1]}")
                 print()
+                time.sleep(0.5)
 
             print(f"y : {y[-1]} | dy : {dy[-2]} | ddy {ddy[-1]}")
 
-                
             c += 1
         ################### DATA COLLECTION ####################
 
@@ -486,6 +474,7 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
         # time.sleep(settings["Trade Interval"])
         ##########################################################
         # Auto Adjusting interval
+        action = False # Just to log action of buy,sell
 
         
 
