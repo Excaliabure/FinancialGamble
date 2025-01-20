@@ -19,13 +19,3 @@ Will be used for databasing currency pairs for ananlysis
     - Create folder and verify folder 
 
 """
-
-
-def init(path):
-
-    # Check if path to folder exists
-    if os.path.exists(path):
-        return
-    else:
-        
-

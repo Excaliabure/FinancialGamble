@@ -56,12 +56,8 @@ AllCurrenyPairs = [
     "GBP/TRY", "GBP/MXN", "GBP/HKD"
 ]
 
-class Forex:
-    def __init__(self):
-        print("Working")
-    pass
 
 
-class ForexApi:
+        
 
-    pass
+

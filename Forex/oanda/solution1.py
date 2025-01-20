@@ -1,7 +1,7 @@
 import datetime 
 import random
 import time
-from utils import log, smooth_ma
+# from utils import log, smooth_ma
 import json
 import os
 import numpy as np
@@ -43,9 +43,8 @@ SETTINGS = {
     "Settings": {
         "Api Key": ap,
         "Account ID": ai,
-        "Practice Account": True,
         "Trade Duration": 28800,
-        "Trade Interval": 15,
+        "Trade Interval": 60,
         "Iterations" : 2000,
         "coef" : 0.5,
         "General Settings" : "true",
@@ -57,7 +56,7 @@ SETTINGS = {
 
         "Pair Settings": {
         
-        "AUD_CAD": {
+            "AUD_CAD": {
                 "units": 1000,
                 "sltp": 1000,
                 "count": 2
@@ -255,18 +254,22 @@ class ForexApi():
         return None
     
 
-
 def deriv(arr):
     """ Descrete derivative """
     
     darr = np.zeros(len(arr))
+
     for i in range(1,len(darr)):
         darr[i] = arr[i] - arr[i-1]
+    
     if len(darr) > 2:
         darr[-1] = darr[-2] - darr[-3]
+
     if len(darr) <= 1:
         return np.array([0])
+    
     darr[0] = darr[1]
+    
     return darr
 
 
@@ -281,21 +284,23 @@ def smooth_ma(arr_, amt=6):
             arr[i-1] += mid
             arr[i] -= mid
     return arr
-def start(log_off=False):
-
-    settings = json.load(open("settings.json"))["Settings"]
+def start(dict=None,log_off=False):
+    if dict == None:
+        settings = json.load(open("settings.json"))["Settings"]
+    else:
+        settings=dict
     required = ["Api Key","Account ID","Trade Duration", "Trade Interval"]
     # Makes sure settings are proper
-    missing = []
-    for i in required:
-        if i not in settings:
-            missing.append(i)
-    if len(missing) != 0:
-        print("Missing parameters in settings: \n")
-        for i in missing:
-            print(f"\t-{i}\n")
-    if len(missing) != 0:
-        sys.exit(0)
+    # missing = []
+    # for i in required:
+    #     if i not in settings:
+    #         missing.append(i)
+    # if len(missing) != 0:
+    #     print("Missing parameters in settings: \n")
+    #     for i in missing:
+    #         print(f"\t-{i}\n")
+    # if len(missing) != 0:
+    #     sys.exit(0)
     start_time = datetime.datetime.now().timestamp()
     s = f"Started at {start_time:.4f}\n"
     print(s)
@@ -318,9 +323,49 @@ def data_arr_collection(filename,name,val):
     with open(filename, 'w') as file:
         json.dump(data, file, indent=4) 
 
-def algo_deriv(env,settings,start_time, ret_derivs=False):
+def algo_helper(arr):
+    smoothArr = smooth_ma(arr)
+    y = smoothArr
+    dy = deriv(y)
+    ddy = deriv(dy)
 
+    buy = []
+    sell = []
+    tbuy = []
+    tsell = []
+    roots = np.array([0])
+
+    
+
+    for i in range(1, len(arr)-1):
+        y = smoothArr[:i + 1]
+        dy = deriv(y)
+        ddy = deriv(dy)
+
+        np.append(roots, abs(ddy[i] - dy[i]))
+        if abs(ddy[i-1] - dy[i-1]) < 1e-6:
+
+            if (dy[i-1] < 0):
+                sell.append(y[i])
+                tsell.append(i)
+            else:
+                buy.append(y[i])
+                tbuy.append(i)
+
+    # return buy, sell, tbuy, tsell
+    if len(tbuy) == 0 or len(tsell) == 0:
+        return 1
+    elif tbuy[-1] > tsell[-1]:
+        return 1
+    else:
+        return -1
+
+
+def algo_deriv(env,settings,start_time, ret_derivs=False):
+    settings = settings["Settings"]
     history_arr_dict = {}
+    
+    buildup = 0
     for pair in settings['Pair Settings'].keys():
 
         history_arr = np.array([])
@@ -350,6 +395,7 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
         history_arr_dict[pair]["hold_position"] = cpos
         history_arr_dict[pair]["current_position"] = pos
         history_arr_dict[pair]["hold_times"] = 2
+
     
         print(f"Put a {'Sell' if pos == -1 else 'Buy'} position on {pair}")
 
@@ -358,8 +404,10 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
         time.sleep(0.5)
 
     action = False
-    while c < iters:
+    roots = np.array([])
 
+    while c < iters:
+        
         for pair in settings['Pair Settings'].keys():
 
             pos = history_arr_dict[pair]["current_position"]
@@ -375,29 +423,29 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
             history_arr_dict[pair]["history_arr"] = history_arr.tolist()
 
 
+
             y = y[2:]
             dy = smooth_ma(deriv(y))
             ddy = smooth_ma(deriv(dy))
             # Turn to piecewise 
-            dy[dy <= 0] = -1
-            dy[dy > 0] = 1 
+            # dy[dy <= 0] = -1
+            # dy[dy > 0] = 1 
 
-            ddy[ddy <= 0] = -1
-            ddy[ddy > 0] = 1
+            # ddy[ddy <= 0] = -1
+            # ddy[ddy > 0] = 1
             # return y,dy,ddy
 
 
-
-            if ddy[-1] == dy[-1]:
-                
+            # roots = np.append(roots, abs(ddy[-2] - dy[-1]))
+        
+            verdict = algo_helper(history_arr)
+            if cpos != verdict:
+                buildup += 1
                 q = env.close(pair)
-                if (dy[-1] < 0):
                     # deriv is negative, so set sell pos
-                    cpos = -1
-                    env.buy_sell(pair, -1000, sltp, terminal_print=False)
-                else:
-                    cpos = 1
-                    env.buy_sell(pair, 1000, sltp, terminal_print=False)
+                cpos = verdict
+                if buildup > 3:
+                    env.buy_sell(pair, 1000 * verdict, sltp, terminal_print=False)
 
                 
                 print(f"{pair} closed {q}")
@@ -417,7 +465,7 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
                 return y,dy,ddy
 
             
-            cpl = float(env.view(_pair = pair)['unrealizedPL'])
+            # cpl = float(env.view(_pair = pair)['unrealizedPL'])
 
             
 
@@ -441,6 +489,7 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
             data_arr_collection('data.json', 'y', y[-1])
             data_arr_collection('data.json', 'dy', dy[-1])
             data_arr_collection('data.json', 'ddy', ddy[-1])
+            data_arr_collection('data.json', 'roots', abs(ddy[-1] - dy[-1]))
             data_arr_collection('data.json', 'bal', float(env.view(gen_info=True)['account']['balance']))
 
             
@@ -484,7 +533,12 @@ if __name__ == '__main__':
 
     env = ForexApi("AUD_USD", settings=SETTINGS)
     env.log_info(log_off=True)
-    start_time, settings = start(log_off=True)
+    start_time, settings = start(dict=SETTINGS, log_off=True)
+
+    if not os.path.exists('data.json'):
+        with open('data.json','w+') as file:
+            file.write("{}")
+            file.close()
     print("\n")
 
     algo_deriv(env,settings,start_time)

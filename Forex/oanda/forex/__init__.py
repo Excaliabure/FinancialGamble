@@ -1,19 +1,16 @@
-from oandapyV20 import API
-import yfinance as yf
-import pandas as pd
-import numpy as np
-import matplotlib
-import oandapyV20
-import datetime
-import random
-import glob
-import time
 import json
-import sys
 import os
+import numpy as np
+
+from .ForexApi import ForexApi 
+from .utils import utils
+from .utils import deriv, to_date, read_settings
+from .hr import hr
+# from .Forex import Forex 
+
+from .min import min
 
 # import database
-import utils
 import sys
 
 # from oandapyV20.contrib.requests import MarketOrderRequest
@@ -37,13 +34,9 @@ Rules:
     - for libraries, make everything as basecase as 
     possible aka no plt.plot, yes matplotlib.pyplot.plot
     remove ambiguity
-    - 
+    - _variable is to signify private variables
+    - All pairs will be done as XXX_XXX, ex EUR_USD
 
-__init__ will:
-
-    - create the database for the file 
-    - managing access for the currency pairs 
-    - updating if necessary
 
 
 """
@@ -51,34 +44,41 @@ __init__ will:
 
 #### Hyperparameters ####
 
-DATABASE_PATH = '/'
+DATABASE_PATH = os.path.dirname(os.path.abspath(__file__))
+SETTINGS_PATH = os.getcwd()
+
 
 #########################
 
-# First metadata
-# if not os.path.exists('metadata.json')):
-#     with open('metadata.json','w+') as file:
-#         file.write("{}")
 
+# Creation of the proper settings and metadata json.
+# Metadata is for the entire class to use
+# Settings is for the user to modify
+_ = os.path.dirname(os.path.abspath(__file__))
+_meta = os.path.join(_, 'metadata.json')
+_settings = os.path.join(_, 'settings.json')
 
-# with open('metadata.json', 'w') as file:
-#     f = json.load(file)
-    # f['DATABASE_PATH'] = DATABASE_PATH
-
-
-
-
-#### Creating Database for Files ####
-
-
+if not os.path.exists(_meta):
+    with open(os.path.join(_, 'metadata.json'),'w+') as file:
+        file.write("{}")
+if not os.path.exists(_settings):
+    with open(os.path.join(os.getcwd(),'settings.json'),'w+') as file:
+        file.write("{}")
 
 
 
 
-# class test:
-#     def __init__(self, val):
-#         self._value = val
+# writes all necessary data for metadata
+with open(_meta, "r") as f:
+    d = json.load(f)
+d["DATABASE_PATH"] = DATABASE_PATH
+d["SETTINGS_PATH"] = SETTINGS_PATH
+with open(_meta,"w") as f:
+    json.dump(d,f)
 
-#     @property
-#     def value(self):
-#         return self._value
+
+
+
+##### Used Functions ######
+
+
