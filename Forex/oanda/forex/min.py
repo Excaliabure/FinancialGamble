@@ -12,12 +12,13 @@ class min:
 
 
         if type(pair) == str:
+            pair = pair.replace("_","")
             pairs = [pair]
         else:
             pairs = pair
         for p in pairs:
-
-            self.data.append(get_min(p))
+            
+            self.data.append(get_min(p.replace("_","")))
         
 
 

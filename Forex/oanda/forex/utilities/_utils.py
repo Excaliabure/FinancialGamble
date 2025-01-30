@@ -85,3 +85,19 @@ def _json_save(file,key,data):
 ##### Utility
 
 
+
+def deriv(arr):
+    """ Descrete derivative """
+    
+    darr = np.zeros(len(arr))
+
+    for i in range(1,len(darr)):
+        darr[i] = arr[i] - arr[i-1]
+    
+    if len(darr) > 2:
+        darr[-1] = darr[-2] - darr[-3]
+    if len(darr) <= 1:
+        return np.array([0])
+    darr[0] = darr[1]
+    
+    return darr

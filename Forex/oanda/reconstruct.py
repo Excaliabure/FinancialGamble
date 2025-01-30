@@ -1,19 +1,57 @@
-import forex
-import numpy as np
-import os
-import yfinance as yf
+import matplotlib.pyplot as plt
+import forex as fx
 import json
+import numpy as np
 
-import forex.utilities
+apiKey = None
+accountID = None
+with open("dev_settings.json", "r") as file:
+    d = json.load(file)
+    accountID = d["acckey"]
+    apiKey = d["accid"]
 
-with open("dev_settings.json","r") as file:
-    devSettings = json.load(file)
 
-os.system('cls')
 
-y = forex.ForexApi(apikey=devSettings["acckey"], accountid=devSettings["accid"])
+a = fx.min("EUR_USD").to_numpy()[0][:,2]
 
-print(y)
+
+fx.algo.deriv12(a,plot=True)
+
+
+
+
+# env = fx.ForexApi(apiKey,accountID)
+# data = fx.hr("EUR_USD")
+
+# y = data.to_numpy()[0]
+
+# import ray
+# from ray.rllib.algorithms.ppo import PPOConfig
+# config = (
+#     PPOConfig()
+#     .framework("torch")
+#     .environment(
+#         fx.ai.deriv12_env,
+#         env_config={
+#                 "accountID" : accountID,
+#                 "apiKey" : apiKey
+#             },  # `config` to pass to your env class
+#     )
+#     .debugging(log_level="ERROR")
+#     .env_runners(num_env_runners=0)
+# )
+# algo = config.build()
+
+# g = fx.ai.deriv12({
+#     "accountID" : accountID,
+#     "apiKey" : apiKey
+# })
+
+# g.build_and_run()
+
+
+# print(f"Descrete Value : {g.ap}")
+
 
 """
 Desired

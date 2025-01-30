@@ -2,13 +2,15 @@ import json
 import os
 import numpy as np
 
-from .ForexApi import ForexApi 
+from .utilities.ForexApi import ForexApi  as ForexApi
 from .utils import utils
-from .utils import deriv, to_date, read_settings
-from .hr import hr
-# from .Forex import Forex 
+from .algo import smooth_ma, deriv12
+from .utils import deriv, to_date, read_settings, data_arr_collection
 
+from .hr import hr
+from .day import day
 from .min import min
+from .ai import *
 
 # import database
 import sys
@@ -81,4 +83,20 @@ with open(_meta,"w") as f:
 
 ##### Used Functions ######
 
+
+def deriv(arr):
+    """ Descrete derivative """
+    
+    darr = np.zeros(len(arr))
+
+    for i in range(1,len(darr)):
+        darr[i] = arr[i] - arr[i-1]
+    
+    if len(darr) > 2:
+        darr[-1] = darr[-2] - darr[-3]
+    if len(darr) <= 1:
+        return np.array([0])
+    darr[0] = darr[1]
+    
+    return darr
 

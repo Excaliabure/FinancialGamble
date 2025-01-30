@@ -5,19 +5,20 @@ import datetime
 
 
 
-class hr:
+class day:
     def __init__(self, pair):
         pairs = []
         self.data = []
 
 
         if type(pair) == str:
+            pair = pair.replace("_","")
             pairs = [pair]
         else:
             pairs = pair
         for p in pairs:
 
-            self.data.append(get_day(p))
+            self.data.append(get_day(p.replace("_","")))
         
 
 

@@ -6,6 +6,7 @@ import json
 import os
 import numpy as np
 import sys
+import forex as fx
 
 from oandapyV20.contrib.requests import MarketOrderRequest
 from oandapyV20.endpoints.pricing import PricingStream
@@ -29,20 +30,12 @@ ACCOUNTID = "101-001-27337634-002"
 
 ######
 
-if APIKEY != None:
-    ap = APIKEY
-else:
-    ap = input("Consider Edititng the file\nInput Api Key: ")
-# ai = input("Account ID: ")
-if ACCOUNTID != None:
-    ai = ACCOUNTID
-else:
-    ai = input("Consider Editing the file\nInput Account id: ")
+
 
 SETTINGS = {
     "Settings": {
-        "Api Key": ap,
-        "Account ID": ai,
+        "Api Key": APIKEY,
+        "Account ID": ACCOUNTID,
         "Trade Duration": 28800,
         "Trade Interval": 60,
         "Iterations" : 2000,
@@ -284,6 +277,8 @@ def smooth_ma(arr_, amt=6):
             arr[i-1] += mid
             arr[i] -= mid
     return arr
+
+
 def start(dict=None,log_off=False):
     if dict == None:
         settings = json.load(open("settings.json"))["Settings"]
@@ -405,7 +400,7 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
 
     action = False
     roots = np.array([])
-
+    lendiff = 0
     while c < iters:
         
         for pair in settings['Pair Settings'].keys():
@@ -437,18 +432,29 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
 
 
             # roots = np.append(roots, abs(ddy[-2] - dy[-1]))
-        
-            verdict = algo_helper(history_arr)
-            if cpos != verdict:
+            seg = ddy - dy
+            collision,tcollision = [], []
+
+            for i in range(1,len(dy)):
+                if seg[i-1] > 0 and seg[i] < 0:
+                    collision.append(0)
+                    tcollision.append(i)
+            
+            if lendiff != len(collision):
+                lendiff = len(collision)
+                verdict = -1 if dy[-1] > 0 else 1
+            # verdict = algo_helper(history_arr)
+            # if cpos != verdict:
                 buildup += 1
-                q = env.close(pair)
                     # deriv is negative, so set sell pos
                 cpos = verdict
-                if buildup > 3:
-                    env.buy_sell(pair, 1000 * verdict, sltp, terminal_print=False)
+                if buildup >= 1 and cpos != pos:
+
+                    q = env.close(pair)
+                    env.buy_sell(pair, 1000 * cpos, sltp, terminal_print=False)
 
                 
-                print(f"{pair} closed {q}")
+                    print(f"{pair} closed {q}")
                 
                 
                 time.sleep(0.5)
@@ -529,7 +535,26 @@ def algo_deriv(env,settings,start_time, ret_derivs=False):
 
 
 if __name__ == '__main__':
+    apiKey = None
+    accountID = None
+    with open("dev_settings.json", "r") as file:
+        d = json.load(file)
+        apiKey = d["acckey"]
+        accountID = d["accid"]
+    APIKEY = apiKey
+    ACCOUNTID = accountID
+    SETTINGS["Api Key"] =  APIKEY
+    SETTINGS["Account ID"] = ACCOUNTID
 
+    if APIKEY != None:
+        ap = APIKEY
+    else:
+        ap = input("Consider Edititng the file\nInput Api Key: ")
+    # ai = input("Account ID: ")
+    if ACCOUNTID != None:
+        ai = ACCOUNTID
+    else:
+        ai = input("Consider Editing the file\nInput Account id: ")
 
     env = ForexApi("AUD_USD", settings=SETTINGS)
     env.log_info(log_off=True)
@@ -540,6 +565,7 @@ if __name__ == '__main__':
             file.write("{}")
             file.close()
     print("\n")
+    
 
     algo_deriv(env,settings,start_time)
     

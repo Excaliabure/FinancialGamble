@@ -55,7 +55,21 @@ def _json_save(file,key,data):
     data[key].append(data)
     with open(file, 'w') as file:
         json.dump(data, file, indent=4) 
+        
+def data_arr_collection(filename,name,val):
 
+    # if '.json' not in file:
+    #     file = file + '.json'
+
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        # print("Data read from file:", data)
+
+    if name not in data.keys():
+        data[name] = []
+    data[name].append(val)
+    with open(filename, 'w') as file:
+        json.dump(data, file, indent=4)
 
 class utils:
     
