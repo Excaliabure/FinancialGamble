@@ -56,9 +56,16 @@ if __name__ == '__main__':
     
 
         if dm ==dh  and prevDecision != dm:
-            prevDecision = dm
+            print(f"{'Bought' if dm < 0 else 'Sold'}")
             env.close("EUR_USD")
-            env.buy_sell("EUR_USD",1000 * prevDecision, 40)
+            time.sleep(2)
+            if prevDecision != 0:
+                env.buy_sell("EUR_USD",-1000 * dm, 40)
+            
+            prevDecision = dm
             data_arr_collection('data.json', 'bal', float(env.view(gen_info=True)['account']['balance']))
 
         time.sleep(30)
+        min = fx.min("EUR_USD").to_numpy()[0][:,2]
+        hr = fx.hr("EUR_USD").to_numpy()[0][:,2]
+        day = fx.day("EUR_USD").to_numpy()[0][:,2]
