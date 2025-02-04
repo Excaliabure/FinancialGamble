@@ -55,15 +55,24 @@ if __name__ == '__main__':
         dd = fx.algo.deriv12(day)
     
 
-        if dm ==dh  and prevDecision != dm:
-            print(f"{'Bought' if dm < 0 else 'Sold'}")
+
+        if dm == dh  and prevDecision != dh:
+            print(f"{'Bought' if dh < 0 else 'Sold'}")
             env.close("EUR_USD")
             time.sleep(2)
             if prevDecision != 0:
-                env.buy_sell("EUR_USD",-1000 * dm, 40)
+                env.buy_sell("EUR_USD",-1000 * dh, 40)
             
-            prevDecision = dm
+            prevDecision = dh
             data_arr_collection('data.json', 'bal', float(env.view(gen_info=True)['account']['balance']))
+
+        while (env.view("EUR_USD") == None and prevDecision != 0):
+            print()
+            print(f"Non sell/buy position for EUR_USD. Attempting...")
+            time.sleep(0.5)
+            env.buy_sell("EUR_USD", -1000 * prevDecision, 99, terminal_print=False)
+            print()
+            time.sleep(0.5)
 
         time.sleep(30)
         min = fx.min("EUR_USD").to_numpy()[0][:,2]
