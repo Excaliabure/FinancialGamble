@@ -35,6 +35,10 @@ def get_min(pair, all_days=False):
     if (all_days):
         t = datetime.datetime.today() - timedelta(days=29)
         initial = yf.download(pair, interval= "1m", start = t, end = t + timedelta(days=5) ,progress=False, ignore_tz=True).reset_index()
+        if initial.empty:
+            return None
+        
+        
         t += timedelta(days=5)
 
         while (t < datetime.datetime.today()):
@@ -48,6 +52,8 @@ def get_min(pair, all_days=False):
 
     else:
         data = yf.download(pair, interval= "1m", period = "max",progress=False, ignore_tz=True).reset_index()
+        if data.empty:
+            return None
     data["Datetime"] = data.Datetime.apply(lambda x: x.timestamp())
     return data.iloc[:,0:6]
 

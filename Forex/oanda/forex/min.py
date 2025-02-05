@@ -23,6 +23,8 @@ class min:
 
 
     def to_numpy(self):
+        if self.data == None:
+            return None
         a = []
         for i in range(len(self.data)):
             if type(self.data[i]) == pd.DataFrame:
