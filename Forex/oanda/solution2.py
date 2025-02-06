@@ -50,7 +50,15 @@ if __name__ == '__main__':
     env = fx.ForexApi(apiKey,accountID)
     prevDecision = 0
     while True:
-        if minute[0] != None and hr[0] != None and day[0] != None:
+        
+        minute = fx.min("EUR_USD").to_numpy()[0]
+        hr = fx.hr("EUR_USD").to_numpy()[0]
+        day = fx.day("EUR_USD").to_numpy()[0]
+        if minute != None and hr != None and day != None:
+            minute = minute[:,2]
+            hr = hr[:,2]
+            day = day[:,2]
+
             dm = fx.algo.deriv12(minute)
             dh = fx.algo.deriv12(hr)
             dd = fx.algo.deriv12(day)
@@ -62,7 +70,7 @@ if __name__ == '__main__':
                 env.close("EUR_USD")
                 time.sleep(2)
                 if prevDecision != 0:
-                    env.buy_sell("EUR_USD",-1000 * dh, 40)
+                    env.buy_sell("EUR_USD",-1000 * dh, 300)
                 
                 prevDecision = dh
                 data_arr_collection('data.json', 'bal', float(env.view(gen_info=True)['account']['balance']))
@@ -71,7 +79,7 @@ if __name__ == '__main__':
                 print()
                 print(f"Non sell/buy position for EUR_USD. Attempting...")
                 time.sleep(0.5)
-                env.buy_sell("EUR_USD", -1000 * prevDecision, 99, terminal_print=False)
+                env.buy_sell("EUR_USD", -1000 * prevDecision, 300, terminal_print=False)
                 print()
                 time.sleep(0.5)
 
@@ -80,8 +88,4 @@ if __name__ == '__main__':
             hr = fx.hr("EUR_USD").to_numpy()[0][:,2]
             day = fx.day("EUR_USD").to_numpy()[0][:,2]
 
-        else:        
-            time.sleep(2)
-            minute = fx.min("EUR_USD").to_numpy()[0][:,2]
-            hr = fx.hr("EUR_USD").to_numpy()[0][:,2]
-            day = fx.day("EUR_USD").to_numpy()[0][:,2]
+        
