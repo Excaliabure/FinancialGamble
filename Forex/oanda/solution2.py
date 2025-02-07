@@ -54,6 +54,7 @@ if __name__ == '__main__':
         minute = fx.min("EUR_USD").to_numpy()[0]
         hr = fx.hr("EUR_USD").to_numpy()[0]
         day = fx.day("EUR_USD").to_numpy()[0]
+
         if minute != None and hr != None and day != None:
             minute = minute[:,2]
             hr = hr[:,2]

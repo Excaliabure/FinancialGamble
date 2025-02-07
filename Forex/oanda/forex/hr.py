@@ -9,6 +9,7 @@ class hr:
     def __init__(self, pair):
         pairs = []
         self.data = []
+        self.isNone = False
 
 
         if type(pair) == str:
@@ -24,12 +25,14 @@ class hr:
         self.y = self.data
 
 
-
     def to_numpy(self):
         r = []
+        if self.data == None:
+            return None
         for i in range(len(self.data)):
             if type(self.data[i]) == pd.DataFrame:
                 r.append(self.data[i].to_numpy())
+            
         return r
     
     def info(self):

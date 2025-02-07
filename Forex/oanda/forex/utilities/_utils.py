@@ -63,6 +63,8 @@ def get_hr(pair):
     pair = pair.replace("_","")
     pair = pair+"=X"
     data = yf.download(pair, interval= "1h", period = "2y",progress=False, ignore_tz=True).reset_index()
+    if data.empty:
+        return None
     data["Datetime"] = data.Datetime.apply(lambda x: x.timestamp())
     return data.iloc[:,0:6]
 
@@ -70,6 +72,8 @@ def get_day(pair):
     """ Gets the most recent day data from yf"""
     pair = pair+"=X"
     data = yf.download(pair, interval= "1d", period = "max",progress=False, ignore_tz=True).reset_index()
+    if data.empty:
+        return None
     data.rename(columns={"Date":"Datetime"},inplace=True)
     data["Datetime"]  = data.Datetime.apply(lambda x: x.timestamp())
     return data.iloc[:,0:6]

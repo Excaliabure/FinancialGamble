@@ -128,7 +128,7 @@ class ForexApi():
             return resp
     
 
-    def get_pair(self, _pair, granularity="M1", return_price_1=True):
+    def get_pair(self, _pair, granularity="M1", onlyPrice=False):
         """
         M1 is for minute 1
         H1 is for hour 1
@@ -158,7 +158,8 @@ class ForexApi():
         # Extract bid and ask prices from the response
         prices = response.get("prices", [])
         asset_price = float(prices[0]['asks'][0]['price'])
-
+        if onlyPrice:
+            return asset_price
         return response
 
 
@@ -212,3 +213,28 @@ class ForexApi():
                     return i
         # Return None if not found
         return None
+    
+    
+    def log_info(self,log_off=False):
+        if log_off:
+            return
+
+        if not os.path.exists("pricelog.csv"):
+            f = open("pricelog.csv", "w")
+            f.write("Time,Bal,Pl\n")
+            f.close()
+        bal = Account.AccountDetails(self.accountid)
+        response = self.api.request(bal)
+        a = response['account']
+        # logs data given to function
+
+        f = open("pricelog.csv", "a")
+
+        bal =  float(a['balance'])
+        pl = float(a['pl'])
+        t = datetime.datetime.now().timestamp()#.strftime("%H:%M:%S")
+
+        f.write(f"{t},{bal},{pl}\n")
+        f.close()
+        return 
+    

@@ -61,190 +61,6 @@ SETTINGS = {
 
 
 
-class ForexApi():
-    def __init__(self,pair_c="EUR_USD",settings=None):
-        """ Describe """
-
-        if not os.path.exists("settings.json"):
-            a = open("settings.json","w")
-            a.write("{\n\n}")
-            a.close()
-
-        if settings != None:
-            s = settings["Settings"]
-        else:
-            s = json.load(open("settings.json"))["Settings"]
-        
-        apikey = s["Api Key"]
-        self.accountid = s["Account ID"]
-        self.api = API(access_token=apikey, environment="practice", headers={"Accept-Datetime-Format": "UNIX"})
-        self.pair = pair_c
-        self.current_focus = "hr"
-        # self.arr = self.history.hr.to_numpy()
-
-
-        if not os.path.exists("log.txt"):
-            a = open("log.txt","w")
-            a.close()
-
-    def buy_sell(self, pair, units, pip_diff, view=False, terminal_print=True, time_In_Force="FOK",type_="MARKET", price="1"):
-        """ 
-        :params
-            pair - forex pair, ex [EURUSD EUR/USD EUR_USD] are all valid formats
-            units - How much to buy. - value makes sell postiion and + makes but position
-            view - Doesnt execute the order, just displays the order to fill
-        If position is negative, sell pos, else pos buy pos"""
-
-        
-        p = (str(units) if type(units) == str else units)
-        pip = 1e-4
-        p = pair
-
-        if "_" not in p:
-            p = pair[:3] + "_" + pair[3:]
-
-        request = PricingInfo(accountID=self.accountid, params={"instruments": p})
-        response = self.api.request(request)
-
-        # Extract bid and ask prices from the response
-        prices = response.get("prices", [])
-        asset_price = float(prices[0]['asks'][0]['price'])
-        basediff = pip * pip_diff
-        tp = asset_price + (-basediff if units  < 0 else basediff)
-        sl = asset_price - (-basediff if units  < 0 else basediff)
-
-        order_info = {
-            "order": {
-                "price": price,
-                "takeProfitOnFill": {
-                        "timeInForce": "GTC",
-                        "price": str(round(tp,5))
-                    },
-                "stopLossOnFill": {
-                    "timeInForce": "GTC",
-                    "price": str(round(sl,5))
-                    },
-                
-            "timeInForce": "FOK",
-            "instrument": p,
-            "units": str(units),
-            "type": type_,
-            "positionFill": "DEFAULT"
-            }
-        }
-        
-
-        if terminal_print:
-            print(order_info)
-        
-        if view:
-            return order_info
-        else:
-            o = Order.OrderCreate(self.accountid,order_info)
-            resp = self.api.request(o)
-            
-            return resp
-    
-
-    def get_pair(self, _pair, count=1, granularity="M1", return_price_1=True):
-        
-        p = _pair
-        if "_" not in p:
-            p = _pair[:3] + "_" + _pair[3:]
-
-
-        current_time = datetime.datetime.now()
-        start_time = (current_time - datetime.timedelta(minutes=50)).isoformat() + "Z"
-        end_time = current_time.isoformat() + "Z"
-
-        parm = {
-            "instruments" : p,
-            "granularity": granularity,
-            "from": start_time,
-            "to": end_time
-        }
-
-        request = PricingInfo(accountID=self.accountid, params=parm)
-        response = self.api.request(request)
-
-
-        return response
-
-        
-    def close(self, _pair):
-        """ Closes specific order"""
-        
-
-        pair = (_pair if "_" in _pair else _pair[:3] + "_" + _pair[3:])
-        list_orders = Positions.OpenPositions(self.accountid)
-        order_dict = self.api.request(list_orders)
-        plist = order_dict['positions']
-        pair_info = None
-
-        for i in plist:
-            if i['instrument'] == pair:       
-                pair_info = plist[0]
-            else:
-                pair_info = None    
-
-        if pair_info == None:
-            return -1
-        else:
-            toclose = ({"longUnits" : "ALL"} if int(pair_info['long']['units']) != 0 else {"shortUnits" : "ALL"})
-        
-        try:
-            req = Positions.PositionClose(accountID=self.accountid, instrument=pair, data=toclose)
-            respo = self.api.request(req)
-            return respo
-        except:
-            return 0
-        
-    def log_info(self,log_off=False):
-        if log_off:
-            return
-
-        if not os.path.exists("pricelog.csv"):
-            f = open("pricelog.csv", "w")
-            f.write("Time,Bal,Pl\n")
-            f.close()
-        bal = Account.AccountDetails(self.accountid)
-        response = self.api.request(bal)
-        a = response['account']
-        # logs data given to function
-
-        f = open("pricelog.csv", "a")
-
-        bal =  float(a['balance'])
-        pl = float(a['pl'])
-        t = datetime.datetime.now().timestamp()#.strftime("%H:%M:%S")
-
-        f.write(f"{t},{bal},{pl}\n")
-        f.close()
-        return 
-    
-
-    def view(self,_pair=None,gen_info=False):
-        """ Views info of pair """
-
-        list_orders = Positions.OpenPositions(self.accountid)
-        account_info = Account.AccountDetails(self.accountid)
-        positions = self.api.request(list_orders)
-        acc_info = self.api.request(account_info)
-        
-        if gen_info:
-            return acc_info
-
-        if _pair == None:
-            return positions
-
-        else:
-            pair = (_pair if "_" in _pair else _pair[:3] + "_" + _pair[3:]) 
-
-            for i in positions['positions']:
-                if i['instrument'] == pair:
-                    return i
-        # Return None if not found
-        return None
     
 
 def deriv(arr):
@@ -303,7 +119,7 @@ def start(dict=None,log_off=False):
     return start_time, settings
 
 
-def data_arr_collection(filename,name,val):
+def data_arr_collection(filename,name,val, overwrite = False):
 
     # if '.json' not in file:
     #     file = file + '.json'
@@ -314,227 +130,17 @@ def data_arr_collection(filename,name,val):
 
     if name not in data.keys():
         data[name] = []
+    
     data[name].append(val)
+    if overwrite:
+        data[name] = val
     with open(filename, 'w') as file:
         json.dump(data, file, indent=4) 
-
-def algo_helper(arr):
-    smoothArr = smooth_ma(arr)
-    y = smoothArr
-    dy = deriv(y)
-    ddy = deriv(dy)
-
-    buy = []
-    sell = []
-    tbuy = []
-    tsell = []
-    roots = np.array([0])
-
-    
-
-    for i in range(1, len(arr)-1):
-        y = smoothArr[:i + 1]
-        dy = deriv(y)
-        ddy = deriv(dy)
-
-        np.append(roots, abs(ddy[i] - dy[i]))
-        if abs(ddy[i-1] - dy[i-1]) < 1e-6:
-
-            if (dy[i-1] < 0):
-                sell.append(y[i])
-                tsell.append(i)
-            else:
-                buy.append(y[i])
-                tbuy.append(i)
-
-    # return buy, sell, tbuy, tsell
-    if len(tbuy) == 0 or len(tsell) == 0:
-        return 1
-    elif tbuy[-1] > tsell[-1]:
-        return 1
-    else:
-        return -1
-
-
-def algo_deriv(env,settings,start_time, ret_derivs=False):
-    settings = settings["Settings"]
-    history_arr_dict = {}
-    
-    buildup = 0
-    for pair in settings['Pair Settings'].keys():
-
-        history_arr = np.array([])
-        print("Building Derivatives...")
-        for i in range(4):
-            val = float(env.get_pair(pair)['prices'][0]['bids'][0]['price'])
-            history_arr = np.append(history_arr, val)
-            time.sleep(5.1)
-
-        y = np.array(history_arr)
-        iters = settings['Iterations']
-        c = 0
-        y = smooth_ma(y[len(y) - 30 : ], 3)
-        ddy = deriv(deriv(y))
-
-            
-            
-        cpos = -1 if ddy[-1] < 0 else 1
-        pos = cpos
-
-        env.close(pair)
-        env.buy_sell(pair, -1000 * pos, 999, terminal_print = False)
-
-        history_arr = history_arr.tolist()
-        history_arr_dict[pair] = {}
-        history_arr_dict[pair]["history_arr"] = history_arr
-        history_arr_dict[pair]["hold_position"] = cpos
-        history_arr_dict[pair]["current_position"] = pos
-        history_arr_dict[pair]["hold_times"] = 2
-
-    
-        print(f"Put a {'Sell' if pos == -1 else 'Buy'} position on {pair}")
-
-
-    
-        time.sleep(0.5)
-
-    action = False
-    roots = np.array([])
-    lendiff = 0
-    while c < iters:
-        
-        for pair in settings['Pair Settings'].keys():
-
-            pos = history_arr_dict[pair]["current_position"]
-            cpos = pos
-            sltp = settings['Pair Settings'][pair]["sltp"]
-            tol = settings['tolerance']
-
-            val = float(env.get_pair(pair)['prices'][0]['bids'][0]['price'])
-            
-            history_arr = np.array(history_arr_dict[pair]["history_arr"])
-            history_arr = np.append(history_arr, val)
-            y = smooth_ma(history_arr, 3)
-            history_arr_dict[pair]["history_arr"] = history_arr.tolist()
-
-
-
-            y = y[2:]
-            dy = smooth_ma(deriv(y))
-            ddy = smooth_ma(deriv(dy))
-            # Turn to piecewise 
-            # dy[dy <= 0] = -1
-            # dy[dy > 0] = 1 
-
-            # ddy[ddy <= 0] = -1
-            # ddy[ddy > 0] = 1
-            # return y,dy,ddy
-
-
-            # roots = np.append(roots, abs(ddy[-2] - dy[-1]))
-            seg = ddy - dy
-            collision,tcollision = [], []
-
-            for i in range(1,len(dy)):
-                if seg[i-1] > 0 and seg[i] < 0:
-                    collision.append(0)
-                    tcollision.append(i)
-            
-            if lendiff != len(collision):
-                lendiff = len(collision)
-                verdict = -1 if dy[-1] > 0 else 1
-            # verdict = algo_helper(history_arr)
-            # if cpos != verdict:
-                buildup += 1
-                    # deriv is negative, so set sell pos
-                cpos = verdict
-                if buildup >= 1 and cpos != pos:
-
-                    q = env.close(pair)
-                    env.buy_sell(pair, 1000 * cpos, sltp, terminal_print=False)
-
-                
-                    print(f"{pair} closed {q}")
-                
-                
-                time.sleep(0.5)
-                
-                print()
-                print(f"{'[SELL]' if cpos == -1 else '[BUY]'} position on {pair} with deriv = {ddy[-1]}")
-                print()
-                time.sleep(0.5)
-                
-                action = True
-
-
-            if ret_derivs:
-                return y,dy,ddy
-
-            
-            # cpl = float(env.view(_pair = pair)['unrealizedPL'])
-
-            
-
-
-            history_arr_dict[pair]["current_position"] = cpos
-            history_arr_dict[pair]["hold_position"] = cpos
-            while (env.view(pair) == None):
-                print()
-                print(f"No sell/buy position for {pair}. Attempting...")
-                tempcurr = history_arr_dict[pair]["current_position"]
-                env.buy_sell(pair, 1000 * tempcurr, sltp, terminal_print=False)
-                print(f"{'[SELL]' if cpos == -1 else '[BUY]'} position on {pair} with deriv = {ddy[-1]}")
-                print()
-                time.sleep(0.5)
-
-            print(f"y : {y[-1]} | dy : {dy[-2]} | ddy {ddy[-1]}")
-
-            c += 1
-        ################### DATA COLLECTION ####################
-
-            data_arr_collection('data.json', 'y', y[-1])
-            data_arr_collection('data.json', 'dy', dy[-1])
-            data_arr_collection('data.json', 'ddy', ddy[-1])
-            data_arr_collection('data.json', 'roots', abs(ddy[-1] - dy[-1]))
-            data_arr_collection('data.json', 'bal', float(env.view(gen_info=True)['account']['balance']))
-
-            
-            if action == True:
-                if cpos == 1:
-                    # if previous deriv is neg, gonan go down
-                    data_arr_collection('data.json', 'bought', y[-1])
-                    data_arr_collection('data.json', 'tbought', c)
-                    
-                else:
-                    data_arr_collection('data.json', 'sold', y[-1])
-                    data_arr_collection('data.json', 'tsold', c)
-            
-
-
-            if  c == settings["Iterations"]:
-                pass
-
-        ########################################################
-        # Adds more accuracy to the function, basically gets the 
-        # live value of the current pair every 5 senods
-        for smolstuff in range(0, int(settings["Trade Interval"]), 5):
-            val = float(env.get_pair(pair)['prices'][0]['bids'][0]['price'])
-                
-            history_arr = np.array(history_arr_dict[pair]["history_arr"])
-            history_arr = np.append(history_arr, val)
-            y = smooth_ma(history_arr, 3)
-            history_arr_dict[pair]["history_arr"] = history_arr.tolist()
-
-            time.sleep(5.05) # Minimum amt of time it takes to update 
-        # time.sleep(settings["Trade Interval"])
-        ##########################################################
-        # Auto Adjusting interval
-        action = False # Just to log action of buy,sell
-
-        
+    return data
 
 
 if __name__ == '__main__':
+    import forex as fx
     apiKey = None
     accountID = None
     with open("dev_settings.json", "r") as file:
@@ -550,13 +156,13 @@ if __name__ == '__main__':
         ap = APIKEY
     else:
         ap = input("Consider Edititng the file\nInput Api Key: ")
-    # ai = input("Account ID: ")
+    
     if ACCOUNTID != None:
         ai = ACCOUNTID
     else:
         ai = input("Consider Editing the file\nInput Account id: ")
 
-    env = ForexApi("AUD_USD", settings=SETTINGS)
+    env = fx.ForexApi(APIKEY, ACCOUNTID)
     env.log_info(log_off=True)
     start_time, settings = start(dict=SETTINGS, log_off=True)
 
@@ -566,6 +172,65 @@ if __name__ == '__main__':
             file.close()
     print("\n")
     
+    ############ Code goes here ##################
 
-    algo_deriv(env,settings,start_time)
-    
+    arrPnL = []
+    pullout = False
+    prevDecision = 0
+    c = 0
+    # print(env.view("EUR_USD"))
+    while True:
+        minute = fx.min("EUR_USD").to_numpy()
+        hr = fx.hr("EUR_USD").to_numpy()
+
+
+        if len(minute) > 0  and len(hr) > 0:
+            minute = minute[0][:,2]
+            hr = hr[0][:,2]
+            
+            dm = fx.algo.deriv12(minute)
+            dh = fx.algo.deriv12(hr)
+            
+
+
+            if dm == dh  and prevDecision != dh:
+                print(f"{'Bought' if dh < 0 else 'Sold'}")
+                env.close("EUR_USD")
+                time.sleep(2)
+                if prevDecision != 0:
+                    env.buy_sell("EUR_USD",-1000 * dh, 300)
+                
+                prevDecision = dh
+                data_arr_collection('data.json', 'bal', float(env.view(gen_info=True)['account']['balance']))
+
+
+            while (env.view("EUR_USD") == None and prevDecision != 0 and pullout == False):
+                print()
+                print(f"Non sell/buy position for EUR_USD. Attempting...")
+                time.sleep(0.5)
+                env.buy_sell("EUR_USD", -1000 * prevDecision, 300, terminal_print=False)
+                print()
+                time.sleep(0.5)
+
+            
+
+            time.sleep(30)
+            minute = fx.min("EUR_USD").to_numpy()[0][:,2]
+            hr = fx.hr("EUR_USD").to_numpy()[0][:,2]
+            day = fx.day("EUR_USD").to_numpy()[0][:,2]
+
+
+            if env.view("EUR_USD") != None:
+                arrPnL.append(env.view("EUR_USD")["unrealizedPL"])
+                if fx.algo.deriv12(arrPnL) == -1:
+                    print(f"Exited with PL of {env.view("EUR_USD")["unrealizedPL"]}")
+                    pullout = True
+                    env.close("EUR_USD")
+                    data_arr_collection("data.json",f"pl_{c}")
+                    c += 1
+
+                
+        
+
+
+    # d = data_arr_collection("data.json", "PnL", env.)
