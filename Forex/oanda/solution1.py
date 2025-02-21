@@ -193,7 +193,7 @@ if __name__ == '__main__':
             
 
 
-            if dm == dh  and prevDecision != dh:
+            if dm == dh  and prevDecision != dh and pullout:
                 print(f"{'Bought' if dh < 0 else 'Sold'}")
                 env.close("EUR_USD")
                 time.sleep(2)
@@ -221,12 +221,12 @@ if __name__ == '__main__':
 
 
             if env.view("EUR_USD") != None:
-                arrPnL.append(env.view("EUR_USD")["unrealizedPL"])
+                arrPnL.append(float(env.view("EUR_USD")["unrealizedPL"])    )
                 if fx.algo.deriv12(arrPnL) == -1:
-                    print(f"Exited with PL of {env.view("EUR_USD")["unrealizedPL"]}")
+                    print(f"Exited with PL of {env.view('EUR_USD')['unrealizedPL']}")
                     pullout = True
                     env.close("EUR_USD")
-                    data_arr_collection("data.json",f"pl_{c}")
+                    data_arr_collection("data.json",f"pl_{c}", float(env.view("EUR_USD")["unrealizedPL"]))
                     c += 1
 
                 

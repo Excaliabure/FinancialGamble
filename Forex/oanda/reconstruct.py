@@ -12,10 +12,10 @@ with open("dev_settings.json", "r") as file:
 
 
 
-a = fx.min("EUR_USD").to_numpy()[0][:,2]
+a = fx.min("EURCHF")#.to_numpy()[0][:,2]
+print(a)
 
 
-fx.algo.deriv12(a,plot=True)
 
 
 
