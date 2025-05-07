@@ -20,6 +20,7 @@ class hr:
 
             self.data.append(get_hr(p))
 
+        self.chlo = self.to_numpy()[0][:,1:5]
 
         # can delete if want to later
         self.y = self.data

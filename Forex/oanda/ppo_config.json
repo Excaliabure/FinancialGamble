@@ -1,0 +1,7 @@
+
+{ "_gamma" : 0.9, 
+    "_lr" : 0.0001,
+    "_train_batch_size_per_learner" : 256,
+    "_entropy_coeff" : 0.9,
+    "_model" : {"fcnet_hiddens": [128, 64], "fcnet_activation": "relu"}  # Example NN
+}

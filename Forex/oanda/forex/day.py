@@ -20,7 +20,7 @@ class day:
 
             self.data.append(get_day(p.replace("_","")))
         
-
+        self.chlo = self.to_numpy()[0][:,1:5]
 
     def to_numpy(self):
         a = []

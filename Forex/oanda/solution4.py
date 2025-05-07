@@ -9,30 +9,48 @@ import random
 from ray.tune.registry import register_env
 import os
 from tqdm import tqdm
+from solution4utils import *
 
 ENV_CONFIG = {"pair" : "EUR_USD",
               "time" : "hour"}
 
-class sol3_env(gym.Env):
+
+class sol4_env(gym.Env):
     def __init__(self, config=None):
 
 
         # self.history = fx.min("EUR_USD").to_numpy()[0][:,1:5]
         # if "pair" not in config.keys():
-        if config["time"] in ["hour", "hr", "H"]:
-            self.history = fx.hr(config["pair"]).to_numpy()[0][:,1:5]
+        if config["time"] in ["day", "d", "Day"]:
+            self.history = fx.day(config["pair"]).to_numpy()[0][:,1:5]
         elif config["time"] in ["minute", "min", "m"]:
             self.history = fx.min(config["pair"]).to_numpy()[0][:,1:5]
         else:
-            self.history = fx.day(config["pair"]).to_numpy()[0][:,1:5]
+            self.history = fx.hr(config["pair"]).to_numpy()[0][:,1:5]
         
         self.hr = fx.hr(config["pair"]).to_numpy()[0][:,1:5]
         self.min = fx.min(config["pair"]).to_numpy()[0][:,1:5]
         self.day = fx.day(config["pair"]).to_numpy()[0][:,1:5]
-        # self.history = np.vstack((self.day, self.hr,self.min))/
         self.history = self.hr
-            
-            
+                    
+        arr = self.history
+        a,b,c = fx.algo.bollinger_bands(arr)
+        d,e,f = fx.algo.macd(arr)
+        g = fx.algo.rsi(arr)
+        h, _i = fx.algo.smi(arr)
+
+
+        hstackarr = [arr, a,b,c,d,e,f,g,h,_i]
+        mval = min([i.shape for i in hstackarr])[0]
+
+
+        for i in range(len(hstackarr)):
+            hstackarr[i] = hstackarr[i][hstackarr[i].shape[0] - mval : ]
+            if i != 0:
+                hstackarr[i] = hstackarr[i].reshape(len(hstackarr[i]),1)
+
+        self.history = np.hstack(hstackarr)
+
             
         self.action_space = gym.spaces.Discrete(3) 
         r1 = random.randint(0,len(self.history) - 128)
@@ -43,7 +61,7 @@ class sol3_env(gym.Env):
         self.c = 0
         self.iters = 50000
         self.total_reward = 0
-        self.observation_space = gym.spaces.Box(0.0, 2.0, shape=(32,4), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-1.0, 2.0, shape=(32,13), dtype=np.float64)
         
 
         ### test
@@ -68,8 +86,8 @@ class sol3_env(gym.Env):
         reward = 0
         terminated = False
         
-        s1_v = self._s1[-1][1]
-        s2_v = self._s2[-1][1]
+        s1_v = self._s1[-1][0]
+        s2_v = self._s2[-1][0]
         # print(self._s1[-1])
 
         if action == 0:
@@ -122,13 +140,13 @@ class sol3_env(gym.Env):
 
 
 def env_creator(env_config):
-    return sol3_env(ENV_CONFIG)
+    return sol4_env(ENV_CONFIG)
 
 def train_new(episodes = 1, config=None):
     ray.shutdown()
     ray.init()
 
-    register_env("sol3", env_creator)
+    register_env("sol4", env_creator)
     
     _gamma=0.05 
     _lr=0.0001
@@ -140,7 +158,7 @@ def train_new(episodes = 1, config=None):
 
     config.api_stack(enable_rl_module_and_learner=False,enable_env_runner_and_connector_v2=False)
 
-    config.environment("sol3")
+    config.environment("sol4")
     config.env_runners(num_env_runners=1)
     config.training(
         gamma=_gamma, 
@@ -191,7 +209,7 @@ def train_existing(episodes = 1):
     ray.shutdown()
     ray.init()
 
-    register_env("sol3", env_creator)
+    register_env("sol4", env_creator)
 
     checkpoint_path = os.path.join(os.getcwd(),"models")
     algo = ray.rllib.algorithms.ppo.PPO.from_checkpoint(checkpoint_path)
@@ -201,7 +219,7 @@ def train_existing(episodes = 1):
 
     config.api_stack(enable_rl_module_and_learner=False,enable_env_runner_and_connector_v2=False)
 
-    config.environment("sol3")
+    config.environment("sol4")
     config.env_runners(num_env_runners=1)
     config.training(
         gamma=0.9, lr=0.01, train_batch_size_per_learner=256
@@ -226,12 +244,13 @@ def train_existing(episodes = 1):
     ray.shutdown()
     
 def infer():
-    register_env("sol3", env_creator)
+    register_env("sol4", env_creator)
     
     config = PPOConfig()
-    config.api_stack(enable_rl_module_and_learner=False,enable_env_runner_and_connector_v2=False)
+    config.api_stack(enable_rl_module_and_learner=False,
+                     enable_env_runner_and_connector_v2=False)
 
-    config.environment("sol3")
+    config.environment("sol4")
     config.env_runners(num_env_runners=1)
     config.training(
         gamma=0.9, lr=0.01, train_batch_size_per_learner=256
@@ -241,7 +260,33 @@ def infer():
     trainer_restored = ray.rllib.algorithms.ppo.PPO.from_checkpoint(checkpoint_path)
 
     policy = trainer_restored.get_policy()
-    data = fx.min("EUR_USD").to_numpy()[0][:,1:5][-64:-32]
+    if config["time"] in ["day", "d", "Day"]:
+        arr = fx.day(ENV_CONFIG["pair"]).chlo
+    elif config["time"] in ["minute", "min", "m"]:
+        arr = fx.min(ENV_CONFIG["pair"]).chlo
+    else:
+        arr = fx.hr(ENV_CONFIG["pair"]).chlo
+    
+    arr = fx.min(ENV_CONFIG["pair"]).chlo
+    a,b,c = fx.algo.bollinger_bands(arr)
+    d,e,f = fx.algo.macd(arr)
+    g = fx.algo.rsi(arr)
+    h, _i = fx.algo.smi(arr)
+
+
+    hstackarr = [arr, a,b,c,d,e,f,g,h,_i]
+    mval = min([i.shape for i in hstackarr])[0]
+
+
+    for i in range(len(hstackarr)):
+        hstackarr[i] = hstackarr[i][hstackarr[i].shape[0] - mval : ]
+        if i != 0:
+            hstackarr[i] = hstackarr[i].reshape(len(hstackarr[i]),1)
+
+    
+
+    data =np.hstack(hstackarr)[-64:-32]
+    
     
 
 
@@ -292,10 +337,6 @@ def main():
             running = False
 
 
-# def debug():
-#     t = sol3_env(ENV_CONFIG)
-
-#     t.step(1)
 
 main()
 # debug()

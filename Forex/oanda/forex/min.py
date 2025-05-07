@@ -20,7 +20,7 @@ class min:
             
             self.data.append(get_min(p.replace("_","")))
         
-
+        self.chlo = self.to_numpy()[0][:,1:5]
 
     def to_numpy(self):
         if self.data == None:
