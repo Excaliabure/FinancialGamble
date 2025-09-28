@@ -1,0 +1,42 @@
+{
+  "room": "new_pairs",
+  "content": {
+    "pair_address": "EEdZYGYidtdKKwTJBJUZsnNcFhNZtSNFL7c3ZJGg84ie",
+    "signature": "2Sztnq6uay873UbUhSyUnSo1dXyC2Dvq8S5sdqt4jrY2BBzdwd8n9DaufoxnbrQ9ztQ1dVZU7CDPPwdfnhNHqHas",
+    "token_address": "33Jkdqu5QjGvsrsNAqHfrtNaZ6CmYYbA6ArNaWygpump",
+    "token_name": "freecoin",
+    "token_ticker": "freecoin",
+    "token_image": None,
+    "token_uri": "https: //rapidlaunch.io/temp/metadata/5986be7d-70e6-486d-8e37-5f56327d82e4.json",
+    "token_decimals": 6,
+    "pair_sol_account": "EEdZYGYidtdKKwTJBJUZsnNcFhNZtSNFL7c3ZJGg84ie",
+    "pair_token_account": "4h3vfJgNYir9otH68q6YCtHLcUSPeFZvxBP5MSpy78DN",
+    "protocol": "Pump V1",
+    "protocol_details": {
+      "global": "4wTV1YmiEkRvAtNtsSGPtUrqRYQMe5SKy2uB4Jjaxnjf",
+      "feeRecipient": "CebN5WGQ4jvEPvsVU4EoHEpgzq1VV7AbicfhtW4xC9iM",
+      "associatedBondingCurve": "4h3vfJgNYir9otH68q6YCtHLcUSPeFZvxBP5MSpy78DN",
+      "eventAuthority": "Ce6TQqeHC9p8KetsN6JsjHK7UTZk7nasjjnr7XxXp9F1",
+      "creator": "99xnE2zEFi8YhmKDaikc1EvH6ELTQJppnqUwMzmpLXrs"
+    },
+    "created_at": "2025-08-16T02:15:50.098Z",
+    "website": None,
+    "twitter": None,
+    "telegram": None,
+    "discord": None,
+    "mint_authority": None,
+    "open_trading": "2025-08-16T02:14:50.098Z",
+    "deployer_address": "99xnE2zEFi8YhmKDaikc1EvH6ELTQJppnqUwMzmpLXrs",
+    "supply": 1000000000,
+    "initial_liquidity_sol": 30,
+    "initial_liquidity_token": 1073000000,
+    "top_10_holders": 9.754545454545498,
+    "lp_burned": 100,
+    "updated_at": "2025-08-16T02:15:50.098Z",
+    "dev_holds_percent": 9.754545454545498,
+    "snipers_hold_percent": 9.754545454545498,
+    "freeze_authority": None,
+    "extra": None,
+    "slot": 360344485
+  }
+}

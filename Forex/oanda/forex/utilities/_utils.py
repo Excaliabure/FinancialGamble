@@ -68,6 +68,9 @@ def get_hr(pair):
     data["Datetime"] = data.Datetime.apply(lambda x: x.timestamp())
     return data.iloc[:,0:6]
 
+
+
+# Gets day as is 
 def get_day(pair):
     """ Gets the most recent day data from yf"""
     pair = pair+"=X"
@@ -77,6 +80,32 @@ def get_day(pair):
     data.rename(columns={"Date":"Datetime"},inplace=True)
     data["Datetime"]  = data.Datetime.apply(lambda x: x.timestamp())
     return data.iloc[:,0:6]
+
+
+def check_database(path, pair):
+
+    # Does database exist
+    os.makedirs(path, exist_ok=True)
+
+    # Does pair exist
+    os.makedirs(os.path.join(path,pair), exist_ok=True)
+
+    # Does day,min,hr,last updated exist
+    files = ["hr.csv", "min.csv", "day.csv", "last_updated.txt"]
+
+    for f in files:
+        if not os.path.exists(os.path.join(path,pair, f)):
+            q = open(os.path.join(path,pair,f), "w+")
+            if f == "last_updated.txt":
+                q.write("0")
+            q.close()
+    
+    # Updates if a day old  
+
+    file = open(os.path.join(path,pair,"last_updated.txt"), "r+")
+    
+
+
 
 def _json_save(file,key,data):
     

@@ -17,5 +17,9 @@ import os
 Will be used for databasing currency pairs for ananlysis
 
     - Create folder and verify folder 
+    - 
 
 """
+
+
+

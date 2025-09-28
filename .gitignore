@@ -3,3 +3,5 @@
 Forex/oanda/dev_settings.json
 Forex/Prebuilt/*
 Forex/oanda/simRust/*
+Crypto/node_modules/*
+Crypto/database

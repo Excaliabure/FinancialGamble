@@ -1,0 +1,42 @@
+{
+    "room": "new_pairs",
+    "content": {
+        "pair_address": "Anb71uAGu3GvBQaNreTt3uUZpgWH4R7MtibS86kYRZaQ",
+        "signature": "3GZHvzBada9pD3RxTK3r79r3VgyTboSLazHKG4tqncURM2GhTSKKFbWFHL7kup7vYfBpWDaLuxkwarpL8uNrMHcD",
+        "token_address": "G9owazvW2bTdxYZnLopbjekqQLHueFx8smiravq4SW9c",
+        "token_name": "Chicago Aid",
+        "token_ticker": "CHIAID",
+        "token_image": null,
+        "token_uri": "https://mcbanalysis.ngrok.dev/ipfs/bafkreigozxcrqslllqu7angrf6b3kk2wsiv3oj3ga6v6luweq6izebkwkm",
+        "token_decimals": 6,
+        "pair_sol_account": "Anb71uAGu3GvBQaNreTt3uUZpgWH4R7MtibS86kYRZaQ",
+        "pair_token_account": "4WdpxGsFdH81NiC89gsX4xKcyaV4sg2C5badpD4JnA5W",
+        "protocol": "Pump V1",
+        "protocol_details": {
+            "global": "4wTV1YmiEkRvAtNtsSGPtUrqRYQMe5SKy2uB4Jjaxnjf",
+            "feeRecipient": "CebN5WGQ4jvEPvsVU4EoHEpgzq1VV7AbicfhtW4xC9iM",
+            "associatedBondingCurve": "4WdpxGsFdH81NiC89gsX4xKcyaV4sg2C5badpD4JnA5W",
+            "eventAuthority": "Ce6TQqeHC9p8KetsN6JsjHK7UTZk7nasjjnr7XxXp9F1",
+            "creator": "2bz2KkUZe9TDQTqXrQGqAkJwt6zxVcxqCHFdcRVCMRZi"
+        },
+        "created_at": "2025-08-16T03:00:33.882Z",
+        "website": null,
+        "twitter": null,
+        "telegram": null,
+        "discord": null,
+        "mint_authority": null,
+        "open_trading": "2025-08-16T02:59:33.882Z",
+        "deployer_address": "2bz2KkUZe9TDQTqXrQGqAkJwt6zxVcxqCHFdcRVCMRZi",
+        "supply": 1000000000,
+        "initial_liquidity_sol": 30,
+        "initial_liquidity_token": 1073000000,
+        "top_10_holders": 0.00035766547429561614,
+        "lp_burned": 100,
+        "updated_at": "2025-08-16T03:00:33.882Z",
+        "dev_holds_percent": 0.0003576654743,
+        "snipers_hold_percent": 0.00035766547429561614,
+        "freeze_authority": null,
+        "extra": null,
+        "slot": 360351331
+    }
+}

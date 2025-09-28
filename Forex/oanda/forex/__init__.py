@@ -11,6 +11,7 @@ from .hr import hr
 from .day import day
 from .min import min
 from .ai import *
+from .dev import *
 
 # import database
 import sys

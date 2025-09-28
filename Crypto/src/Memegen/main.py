@@ -1,3 +1,0 @@
-import numpy 
-
-numpy.linalg

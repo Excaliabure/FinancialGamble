@@ -1,15 +1,16 @@
 from .utilities._utils import get_min
+from .database import *
 import numpy as np
 import pandas as pd
 import datetime
+import os 
 
 
 
 class min:
-    def __init__(self, pair):
+    def __init__(self, pair, database=True):
         pairs = []
         self.data = []
-
 
         if type(pair) == str:
             pair = pair.replace("_","")
@@ -18,7 +19,9 @@ class min:
             pairs = pair
         for p in pairs:
             
-            self.data.append(get_min(p.replace("_","")))
+            r = get_min(p.replace("_",""))
+
+            self.data.append(r)
         
         self.chlo = self.to_numpy()[0][:,1:5]
 
@@ -42,5 +45,8 @@ class min:
 
         return r
     
+
+
+
 
 
