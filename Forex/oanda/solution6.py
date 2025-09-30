@@ -22,62 +22,87 @@ with open("dev_settings.json", "r") as file:
     accountID = d["accid"]
 
 
-class ev:
 
-    def __init__(self):
+##################################################################
 
-        self.pcp = np.load("pcp.npy")# 155 x 4050
-        self.idx = 0
-        self.forward = 6
+#######################################################
 
-    def step(self,inc=6):
-        
-        temp = self.forward
-        self.forward += inc
-        if self.idx+inc >= len(self.pcp):
-            return None
-        return self.pcp[:,self.idx:self.idx+self.forward]
-        
+pcp = np.load("pcp.npy")# 155 x 4050
+
+x = np.zeros((6,1)); x[0,:] = -1; x[-1,:] = 1
+monies = np.zeros((155,1)) + 100
+
+# print(pcp.shape, x.shape)
+viewarr = []
+
+
+def moving_average(arr, window_size):
+    return np.convolve(arr, np.ones(window_size)/window_size, mode='valid')
+
+WINDOWSIZE = 3
+
+n = np.zeros((pcp.shape[0],pcp.shape[1]))
+
+def ema(arr, span):
+    """
+    Compute the Exponential Moving Average (EMA) of a 1D array.
+
+    Parameters
+    ----------
+    arr : array_like
+        Input data (1D).
+    span : int
+        Span for the EMA (controls smoothing, larger = smoother).
+
+    Returns
+    -------
+    ema_values : np.ndarray
+        The EMA of the input.
+    """
+    arr = np.asarray(arr, dtype=float)
+    alpha = 2 / (span + 1)
+    
+    ema_values = np.zeros_like(arr)
+    ema_values[0] = arr[0]
+    for i in range(1, len(arr)):
+        ema_values[i] = alpha * arr[i] + (1 - alpha) * ema_values[i - 1]
+    return ema_values
+
+for i in range(pcp.shape[0]):
+
+    n[i] = ema(pcp[i],3)
+
+    
+pcp = n
+
+
+for i in range(6, pcp.shape[1]-12,6):
+
+    a =  pcp[:,i:i+6]
+    ans = a @ x / 6 * 100
+    
+    decision = monies * ans
+
+    incvec = (pcp[:,i+7] - pcp[:,i+6]) /2 * 100 
+    print(sum(monies))
+
+    monies = monies - decision
+
+
+
+
+    profit = decision + (decision * np.expand_dims(incvec, axis=1))
     
 
 
-env = ev()
-money = 10000
+    viewarr.append(monies.sum())
+
+plt.plot(pcp[2])
+plt.show()
 
 
 
-def percent_incdec(arr):
-    if arr[0] == 0:
-        return 0
-        
-    r  = (arr[-1] - arr[0]) / arr[0] * 10000
-    
-    return r
 
 
 
-running = True
-inc = env.step()
-slopes = np.zeros((inc.shape[0], 4050 // 6))
-
-time_step = 0
-
-while running:
-    inc = env.step()
-    
-    for i in range(inc.shape[0]):
-        s = percent_incdec(inc[i])
-        for j in range(len(inc[i])):
-            if s != 0:
-                break
-            else:
-                s = percent_incdec(inc[j])
-        # print(s)
-        slopes[time_step][i] = s
-        time_step += 1
-
-    print(slopes.max())
-    print(slopes.shape)
-    if type(inc) != np.array:
-        running=False
 
