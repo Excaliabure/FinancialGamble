@@ -10,7 +10,7 @@ import oandapyV20
 import oandapyV20.endpoints.instruments as instruments
 import os
 import matplotlib.pyplot as plt
-
+from scipy.ndimage import gaussian_filter1d
 
 
 from oandapyV20 import API
@@ -30,7 +30,7 @@ with open("dev_settings.json", "r") as file:
 pcp = np.load("pcp.npy")# 155 x 4050
 
 x = np.zeros((6,1)); x[0,:] = -1; x[-1,:] = 1
-monies = np.zeros((155,1)) + 100
+monies = np.zeros((pcp.shape[0],1)) + 100
 
 # print(pcp.shape, x.shape)
 viewarr = []
@@ -72,8 +72,38 @@ for i in range(pcp.shape[0]):
 
     n[i] = ema(pcp[i],3)
 
-    
-pcp = n
+
+pcp = pcp[:,pcp.shape[1]-150:]
+# pcp = pcp[139]
+
+print(pcp)
+plt.plot(pcp)
+plt.show()
+
+
+# Z = pcp[122]
+
+# plt.plot(Z)
+# plt.show()
+
+# x = np.arange(Z.shape[1])   # columns
+# y = np.arange(Z.shape[0])   # rows
+# X, Y = np.meshgrid(x, y)
+
+# # 3D surface plot
+# fig = plt.figure(figsize=(8,6))
+# ax = fig.add_subplot(111, projection='3d')
+# surf = ax.plot_surface(X, Y, Z, cmap='viridis')
+
+# ax.set_xlabel("X-axis (columns)")
+# ax.set_ylabel("Y-axis (rows)")
+# ax.set_zlabel("Z value")
+# fig.colorbar(surf, shrink=0.5, aspect=10)
+# plt.show()
+
+
+# Clean up pairs
+
 
 
 for i in range(6, pcp.shape[1]-12,6):
@@ -82,6 +112,8 @@ for i in range(6, pcp.shape[1]-12,6):
     ans = a @ x / 6 * 100
     
     decision = monies * ans
+
+    
 
     incvec = (pcp[:,i+7] - pcp[:,i+6]) /2 * 100 
     print(sum(monies))
@@ -95,9 +127,12 @@ for i in range(6, pcp.shape[1]-12,6):
     
 
 
+
     viewarr.append(monies.sum())
 
-plt.plot(pcp[2])
+# plt.plot(pcp[2])
+# plt.show()
+plt.plot(monies)
 plt.show()
 
 

@@ -4,3 +4,4 @@ yfinance
 gymnasium
 pandas_ta
 matplotlib
+scipy

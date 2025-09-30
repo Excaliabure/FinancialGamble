@@ -8,7 +8,7 @@ import os
 
 
 class min:
-    def __init__(self, pair, database=True):
+    def __init__(self, pair, alldays=False, database=True):
         pairs = []
         self.data = []
 
@@ -19,7 +19,7 @@ class min:
             pairs = pair
         for p in pairs:
             
-            r = get_min(p.replace("_",""))
+            r = get_min(p.replace("_",""),all_days=alldays)
 
             self.data.append(r)
         
