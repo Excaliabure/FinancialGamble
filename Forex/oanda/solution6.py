@@ -77,8 +77,8 @@ pcp = pcp[:,pcp.shape[1]-150:]
 # pcp = pcp[139]
 
 print(pcp)
-plt.plot(pcp)
-plt.show()
+# plt.plot(pcp)
+# plt.show()
 
 
 # Z = pcp[122]
@@ -126,18 +126,50 @@ for i in range(6, pcp.shape[1]-12,6):
     profit = decision + (decision * np.expand_dims(incvec, axis=1))
     
 
+    env = fx.ForexApi(apiKey, accountID)
 
 
     viewarr.append(monies.sum())
 
 # plt.plot(pcp[2])
 # plt.show()
-plt.plot(monies)
-plt.show()
+# plt.plot(monies)
+# plt.show()
 
+# Grab all pairs
 
+pairs = [
+    # Majors
+    "EUR_USD","USD_JPY","GBP_USD","AUD_USD","USD_CHF","USD_CAD","NZD_USD",
+    
+    # Crosses (liquid minors)
+    # "EUR_GBP","EUR_JPY","GBP_JPY","AUD_JPY","CHF_JPY","EUR_AUD","EUR_CHF","EUR_CAD",
+    # "GBP_CHF","GBP_AUD","AUD_CAD","AUD_CHF","AUD_NZD","CAD_CHF","CAD_JPY","NZD_JPY",
+    # "NZD_CAD",
+    
+    # # Some common exotics (kept liquid ones, removed dead/illiquid like SKK, CNH crosses except EUR/USD)
+    # "USD_SGD","USD_HKD","USD_ZAR","USD_SEK","USD_NOK","USD_DKK","USD_MXN","USD_TRY",
+    # "USD_RUB","USD_PLN","EUR_SEK","EUR_NOK","EUR_DKK","EUR_TRY","EUR_PLN",
+    # "EUR_HUF","EUR_CZK","GBP_SEK","GBP_NOK","GBP_DKK",
+    
+    # # Select liquid Asian + commodity exotics
+    # "USD_INR","USD_THB","USD_IDR","USD_PHP","USD_MYR","USD_KRW","USD_TWD",
+    # "USD_BRL","USD_CLP","USD_PEN","USD_VND",
+    
+    # # Middle East (kept only highly traded pegged currencies)
+    # "USD_SAR","USD_AED","USD_QAR","USD_ILS","USD_KWD","USD_OMR","USD_BHD"
+]
 
+def fetch():
+    pair_data = []
+    donotexistpairs = []
+    for i in pairs:
+        
+        r = fx.min(i).to_numpy()[0]
+        pair_data.append(r[len(r)-6:,2])
+        
+        
+    print(donotexistpairs)
+    return np.array(pair_data)
 
-
-
-
+print(fetch())
