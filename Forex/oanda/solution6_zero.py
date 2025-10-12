@@ -4,7 +4,6 @@ import forex as fx
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-
 pairs =['AUD_CAD', 'AUD_CHF', 'AUD_HKD', 'AUD_JPY', 'AUD_NZD', 'AUD_SGD', 'AUD_USD', 
         'CAD_CHF', 'CAD_HKD', 'CAD_JPY', 'CAD_SGD', 'CHF_HKD', 'CHF_JPY', 'CHF_ZAR', 
         'EUR_AUD', 'EUR_CAD', 'EUR_CHF', 'EUR_CZK', 'EUR_DKK', 'EUR_GBP', 'EUR_HKD', 
@@ -34,4 +33,7 @@ env = fx.ForexApi(apiKey, accountID)
 
 
 # env.buy_sell("EUR_USD",-1000,100)
-print(np.load("monies.npy"))
+data = np.load("monies.npy")
+print(data)
+plt.plot(data)
+plt.show()

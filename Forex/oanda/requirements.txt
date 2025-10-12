@@ -5,3 +5,7 @@ gymnasium
 pandas_ta
 matplotlib
 scipy
+torch 
+torchvision
+ray[default]
+lean
