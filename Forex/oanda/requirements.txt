@@ -2,7 +2,6 @@ numpy
 oandapyv20
 yfinance
 gymnasium
-pandas_ta
 matplotlib
 scipy
 torch 

@@ -1,107 +1,189 @@
-import time 
-import json
-import forex as fx
-import itertools
+# region imports
+from AlgorithmImports import *
+from datetime import datetime, timedelta, time, date
 import numpy as np
-import matplotlib.pyplot as plt
-
-import os
+import torch
 import torch.nn as nn
+import pandas as pd
+# endregion
 
-import rllib
+
+class PPOAgent(nn.Module):
+    """A simple PPO-style agent that outputs buy probabilities for each pair."""
+    def __init__(self, state_dim, action_dim):
+        super().__init__()
+        self.network = nn.Sequential(
+            nn.Linear(12, 6),
+            nn.ReLU(),
+            nn.Linear(6, 1),
+            nn.Sigmoid()  # Each element is probability of "buy"
+        )
+
+    def forward(self, x):
+        return self.network(x)
 
 
-pairs =['AUD_CAD', 'AUD_CHF', 'AUD_HKD', 'AUD_NZD', 'AUD_SGD', 'AUD_USD', 
-        'CAD_CHF', 'CAD_HKD', 'CAD_SGD', 'CHF_HKD', 'CHF_ZAR', 
-        'EUR_AUD', 'EUR_CAD', 'EUR_CHF', 'EUR_CZK', 'EUR_DKK', 'EUR_GBP', 'EUR_HKD', 
-        'EUR_NZD', 'EUR_PLN', 'EUR_SEK', 'EUR_SGD', 
-        'EUR_TRY', 'EUR_USD', 'EUR_ZAR', 'GBP_AUD', 'GBP_CAD', 'GBP_CHF', 'GBP_HKD', 
-        'GBP_NZD', 'GBP_PLN', 'GBP_SGD', 'GBP_USD', 'GBP_ZAR', 
-        'NZD_CAD', 'NZD_CHF', 'NZD_HKD', 'NZD_SGD', 'NZD_USD', 'SGD_CHF',
-        'USD_CAD', 'USD_CHF', 'USD_CNH', 'USD_CZK', 'USD_DKK', 
-        'USD_HKD', 'USD_MXN', 'USD_NOK', 'USD_PLN', 'USD_SEK', 'USD_SGD', 
-        'USD_THB', 'USD_TRY', 'USD_ZAR'
-        # 'EUR_NOK', 'EUR_HUF',
-        # 'ZAR_JPY','HKD_JPY', 'GBP_JPY', 'EUR_JPY', 'AUD_JPY', 'CAD_JPY', 'NZD_JPY', 'CHF_JPY', 'SGD_JPY', 'TRY_JPY', 'USD_JPY'
+class SquareFluorescentPinkLemur(QCAlgorithm):
+    def initialize(self):
+        self.set_start_date(2024, 4, 11)
+        self.set_end_date(2024, 9, 11)
+        self.set_cash(1_000_000)
+
+        # Define forex pairs
+        self.pairs = [
+            'AUDCAD', 'AUDCHF', 'AUDHKD', 'AUDNZD', 'AUDSGD', 'AUDUSD',
+            'CADCHF', 'CADHKD', 'CADSGD', 'CHFHKD', 'CHFZAR', 'EURAUD',
+            'EURCAD', 'EURCHF', 'EURCZK', 'EURDKK', 'EURGBP', 'EURHKD',
+            'EURNZD', 'EURPLN', 'EURSEK', 'EURSGD', 'EURTRY', 'EURUSD',
+            'EURZAR', 'GBPAUD', 'GBPCAD', 'GBPCHF', 'GBPHKD', 'GBPNZD',
+            'GBPPLN', 'GBPSGD', 'GBPUSD', 'GBPZAR', 'NZDCAD', 'NZDCHF',
+            'NZDHKD', 'NZDSGD', 'NZDUSD', 'SGDCHF', 'USDCAD', 'USDCHF',
+            'USDCNH', 'USDCZK', 'USDDKK', 'USDHKD', 'USDMXN', 'USDNOK',
+            'USDPLN', 'USDSEK', 'USDSGD', 'USDTHB', 'USDTRY', 'USDZAR'
+        ]
+
+        # Add data
+        self.symbols = [self.add_forex(p, Resolution.MINUTE, Market.OANDA).Symbol for p in self.pairs]
+
+        # Schedule trading function (runs once per day)
+        # self.schedule.on(
+        #     self.date_rules.every_day(),
+        #     self.time_rules.every(TimeSpan.from_hours(23)),
+        #     self.TradePairs
+        # )
+
+        # Initialize PPO agent
+        self.agent = PPOAgent(state_dim=len(self.pairs), action_dim=len(self.pairs))
+        self.optimizer = torch.optim.Adam(self.agent.parameters(), lr=1e-3)
+
+        # MIA KALIFA 
+        self._symbols: list[Symbol] = []
+        for ticker in self.pairs:
+            symbol: Symbol = self.add_forex(ticker, Resolution.MINUTE).symbol
+            self._symbols.append(symbol)
+
+            self._previous_day_hourly_data: dict[Symbol, pd.DataFrame] = {}
+
+
+        # State buffers
+        self.prev_prices = np.zeros(len(self.symbols))
+        self.curr_prices = np.zeros(len(self.symbols))
+        self.hist = []  # stores (state, action, reward)
+        self._state = []
+        self.training_interval = 50  # train every 50 steps
+
+        # self.debug("✅ PPO RL Agent Initialized")
+
+    def on_data(self, data: Slice):
+        """Collect state and train PPO periodically."""
+        # 1️⃣ Build state vector
+        updated = False
+        for i, sym in enumerate(self.symbols):
+            if data.contains_key(sym):
+                self.curr_prices[i] = data[sym].Price
+                updated = True
+
+        if not updated:
+            return
+
+        # Skip first step
+        if np.any(self.prev_prices == 0):
+            self.prev_prices = self.curr_prices.copy()
+            return
+
+        # 2️⃣ Create state tensor
+        hours = 12
+        end = self.time
+        start = end - timedelta(hours=hours)
+
+
+       
+        self._state, self.curr_prices = self.GetGameState(self.time)
+
         
-    ]
+        # state = torch.tensor(self._state, dtype=torch.float32)
 
+        # 3️⃣ Get action probabilities (buy probability for each pair)
+        with torch.no_grad():
+            probs = self.agent(self._state)
+            actions = (probs > 0.5).float()  # convert to binary {0,1}
 
-
-# from oandapyV20 import API
-# apiKey = None
-# accountID = None
-# with open("dev_settings.json", "r") as file:
-#     d = json.load(file)
-#     apiKey = d["acckey"]
-#     accountID = d["accid"]
-
-
-# env = fx.ForexApi(apiKey, accountID)
-
-
-# TIMESTEP = 50 # In minutes, 0 < TIMESTEP < 51
-
-# prev = np.zeros((len(pairs),1))
-# curr = np.zeros((len(pairs),1))
-
-# env.close_all_orders(True)
-
-# for q in range(len(pairs)):
-    
-#     data = env.get_pair(pairs[q])
-        
-#     # CHLO 
-    
-#     prev[q] = data[-TIMESTEP][0]
-#     curr[q] = data[-1][0]
-
-# npyarr = None
-# if os.path.exists("monies.npy"):
-#     npyarr = np.load("monies.npy")
-# else:
-#     temp = [env.bal()['balance']]
-#     np.save("monies.npy", np.array(temp))
-#     npyarr = np.array(temp)
-    
-# monies_arr = []
-
-# for q in npyarr:
-#     monies_arr.append(q)
-
-# for i in range(10):
-#     slope = (curr-prev) / curr * 100
-#     port = (np.zeros((slope.shape[0],1)) + 31000)
-
-
-#     decision = np.array(slope * port, dtype=int)
-
-#     for j in range(len(pairs)):
-#         env.buy_sell(pairs[j], decision[j].item(), 100)
-
-
-
-#     # time.sleep(TIMESTEP * 60 * 3.14)
-
-#     for i in range(60):
-#         monies_arr.append(env.bal()['NAV'])
-#         np.save('monies.npy',np.array(monies_arr))
-#         time.sleep(TIMESTEP * 3.14)
-
-#     env.close_all_orders(True)
-#     time.sleep(3)
-
-
-#     monies_arr.append(env.bal()['balance'])
-#     np.save('monies.npy',np.array(monies_arr))
-
-
-#     for q in range(len(pairs)):
-    
-#         data = env.get_pair(pairs[q])
+        # 4️⃣ Execute trades in QuantConnect
+        if self.time.hour % 23 == 0:
+            for i, sym in enumerate(self.symbols):
+                if actions[i] == 1:
+                    self.market_order(sym, 1000)  # buy if action == 1
             
-#         prev[q] = data[-TIMESTEP][0]
-#         curr[q] = data[-1][0]
 
-    
-    
+        # 5️⃣ Compute reward (PnL change)
+        reward = np.array([self.Portfolio[sym].UnrealizedProfit for sym in self.symbols]).sum().item()
+
+        # 6️⃣ Store transition
+        self.hist.append((self._state, actions, reward))
+
+        # 7️⃣ Train agent periodically
+        if len(self.hist) >= self.training_interval:
+            self.train_agent()
+            self.hist = []  # clear memory
+
+        # 8️⃣ Update prev prices
+        self.prev_prices = self.curr_prices.copy()
+
+    def train_agent(self):
+        """Simple PPO-style policy gradient update."""
+        states, actions, rewards = zip(*self.hist)
+        states = torch.stack(states)
+        actions = torch.stack(actions)
+        rewards = torch.tensor(rewards, dtype=torch.float32)
+
+        # Compute discounted returns
+        gamma = 0.99
+        returns = []
+        G = 0
+        for r in reversed(rewards):
+            G = r + gamma * G
+            returns.insert(0, G)
+        returns = torch.tensor(returns, dtype=torch.float32)
+        if self.time.hour == 12 and self.time.minute == 0:
+            self.get_previous_day_hourly_data()
+        # Normalize returns (stabilize training)
+        returns = (returns - returns.mean()) / (returns.std() + 1e-8)
+
+        # Forward pass through agent
+        probs = self.agent(states)
+
+        # PPO-like policy loss (maximize reward-weighted log-likelihood)
+        log_probs = actions * torch.log(probs + 1e-8) + (1 - actions) * torch.log(1 - probs + 1e-8)
+        loss = -(log_probs.sum(dim=1) * returns).mean()
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        # self.debug(f"Trained Agent | Loss={loss.item():.6f}, Mean Reward={rewards.mean().item():.6f}")
+
+   
+    def GetGameState(self, dtime, step_back=12):
+        start = dtime - timedelta(hours=step_back)
+        end = dtime
+
+        try:
+            history = self.History(self.symbols, start, end, Resolution.HOUR)['close']
+
+            if history.empty:
+                raise ValueError("No historical data, using dummy fallback")
+            
+            history = history.unstack(level=0)  # columns = symbols, rows = hours
+            history = history.fillna(method='ffill').fillna(1.0)
+
+        except Exception:
+            # Dummy fallback: ones
+            history = pd.DataFrame(np.ones((step_back, len(self.symbols))),
+                                columns=[s.Value for s in self.symbols])
+
+        # Flatten into 1D vector for NN
+        r = torch.tensor(history.to_numpy().T, dtype=torch.float32)
+        curr = history.iloc[-1].to_numpy()
+
+        return r, curr
+
