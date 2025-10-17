@@ -13,6 +13,10 @@
                 {
                     "localRoot": "${workspaceFolder}",
                     "remoteRoot": "/LeanCLI"
+                },
+                {
+                    "localRoot": "/mnt/c/Users/excal/OneDrive/Documents/GitHub/FinancialGamble/Forex/oanda/quantconnect/Library",
+                    "remoteRoot": "/Library"
                 }
             ]
         }

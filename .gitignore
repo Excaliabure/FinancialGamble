@@ -7,3 +7,5 @@ Crypto/node_modules/*
 Crypto/database
 Crypto/Keys/venv/*
 Forex/oanda/pyenv
+Forex/oanda/quantconnect/data/*
+Forex/oanda/quantconnect/sol1/backtests

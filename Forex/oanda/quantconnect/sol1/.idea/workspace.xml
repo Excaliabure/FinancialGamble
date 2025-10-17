@@ -9,7 +9,7 @@
         <option name="pathMappings">
           <list>
             <mapping local-root="$PROJECT_DIR$" remote-root="/LeanCLI" />
-            
+            <mapping local-root="$PROJECT_DIR$/../Library" remote-root="/Library" />
           </list>
         </option>
       </PathMappingSettings>

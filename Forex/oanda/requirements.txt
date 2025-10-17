@@ -1,10 +1,11 @@
 numpy
-oandapyv20
-yfinance
 gymnasium
 matplotlib
-scipy
 torch 
-torchvision
 ray[default]
 lean
+yfinance
+scipy
+tqdm
+torchdiffeq
+numba
